@@ -78,12 +78,6 @@ func handle(r *Request) {
 		counts[c] = w
 	}
 
-	// TODO 3: a client seen in an older window starts again from zero (counts).
-	if w.start < start {
-		w = &windowCount{start: start}
-		counts[c] = w
-	}
-
 	// TODO 4: at limit requests -> 429 with Retry-After (seconds to the window end, rounded up), NOT counted.
 	//         Otherwise count the request and answer 200.
 	if w.count >= limit {
