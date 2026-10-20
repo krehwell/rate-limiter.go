@@ -1,0 +1,37 @@
+@now 1700000000
+GET /v1/items?page=2 HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: dana
+
+POST /v1/orders HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: dana
+
+DELETE /v1/orders/17 HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: dana
+
+GET / HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: dana
+
+PUT /v1/profile HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: dana
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: dana
+

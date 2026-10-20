@@ -1,0 +1,98 @@
+@now 1700000000
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-1
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-2
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-3
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-1
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-2
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-3
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-1
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-2
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-3
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-1
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-2
+
+@keys
+@now 1700000039.75
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-1
+
+@keys
+@now 1700000040
+@keys
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: alice
+X-Served-By: app-1
+
+@keys

@@ -1,0 +1,42 @@
+{
+  "course": "build-rate-limiter",
+  "language": "go",
+  "language_id": 1060,
+  "entrypoint": "main.go",
+  "version": 1,
+  "content_hash": "42c03ef34b6f5763",
+  "lessons": [
+    {
+      "slug": "why-rate-limit",
+      "tests_hash": "2d91a69818c1"
+    },
+    {
+      "slug": "fixed-window",
+      "tests_hash": "9227714ba87e"
+    },
+    {
+      "slug": "sliding-window",
+      "tests_hash": "e3cdc7433a7e"
+    },
+    {
+      "slug": "token-bucket",
+      "tests_hash": "853b1e8414e0"
+    },
+    {
+      "slug": "leaky-bucket",
+      "tests_hash": "2eb08d3c449b"
+    },
+    {
+      "slug": "distributed",
+      "tests_hash": "1207e0c61db7"
+    },
+    {
+      "slug": "tiered",
+      "tests_hash": "1fc34b0267be"
+    },
+    {
+      "slug": "full-rl",
+      "tests_hash": "073f16353237"
+    }
+  ]
+}

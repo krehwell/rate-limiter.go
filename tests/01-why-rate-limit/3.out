@@ -1,0 +1,30 @@
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 15
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+

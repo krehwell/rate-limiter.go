@@ -1,0 +1,49 @@
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 40
+X-RateLimit-Resource: user
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 40
+X-RateLimit-Resource: user
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 40
+X-RateLimit-Resource: ip
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+X-RateLimit-Resource: ip
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+X-RateLimit-Resource: ip
+Content-Length: 0
+

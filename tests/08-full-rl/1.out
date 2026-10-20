@@ -1,0 +1,27 @@
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 4
+X-RateLimit-Reset: 1700000004
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 3
+X-RateLimit-Reset: 1700000008
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 2
+X-RateLimit-Reset: 1700000012
+Content-Length: 0
+

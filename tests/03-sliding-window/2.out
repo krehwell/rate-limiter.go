@@ -1,0 +1,63 @@
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 4
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 3
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 2
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 1
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 10
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700000060
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700000070
+Content-Length: 0
+
+HTTP/1.1 429 Too Many Requests
+Retry-After: 10
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700000070
+Content-Length: 0
+
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700000080
+Content-Length: 0
+

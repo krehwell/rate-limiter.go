@@ -1,0 +1,76 @@
+@now 1700000039.5
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+@now 1700000040
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+@now 1700000099
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
+@now 1700000099.5
+GET /v1/items HTTP/1.1
+Host: api.example.com
+User-Agent: curl/8.4.0
+Accept: */*
+X-API-Key: bea
+
