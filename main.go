@@ -52,57 +52,38 @@ func endHead() {
 	out.WriteString("Content-Length: 0\r\n\r\n")
 }
 
-const loginLimit = 3 // requests per window for POST /login
-const apiLimit = 10  // requests per window for everything else
-const window = 60    // window length in seconds
+const limit = 5     // allowed requests in any window-second span
+const window = 60.0 // seconds
 
-type windowCount struct {
-	start int64 // start of the window this counter last saw
-	count int64 // requests counted in that window
-}
-
-var counts = map[string]*windowCount{} // "client|class" -> its window
+var logs = map[string][]float64{} // client -> timestamps of its allowed requests, oldest first
 
 func handle(r *Request) {
-	c := header(r, "x-api-key")
-	if c == "" {
-		c = "anonymous"
+	client := header(r, "x-api-key")
+	if client == "" {
+		client = "anonymous"
+	}
+	log := logs[client]
+
+	for len(log) > 0 && log[0] <= r.Now-window {
+		log = log[1:]
 	}
 
-	// TODO 1: the route class: login for POST with the path (target up to '?') exactly "/login", else api.
-	path, _, _ := strings.Cut(r.Target, "?")
-	class := "api"
-	limit := int64(apiLimit)
-	if r.Method == "POST" && path == "/login" {
-		class = "login"
-		limit = int64(loginLimit)
-	}
-	client := c + "|" + class
-
-	// TODO 2: the window start, then this (client, class)'s window in counts (stale -> zero).
-	start := int64(math.Floor(r.Now/window)) * window
-
-	w, ok := counts[client]
-	if !ok || w.start < start {
-		w = &windowCount{start: start}
-		counts[client] = w
-	}
-
-	// TODO 4: X-RateLimit-Limit, -Remaining (after counting), -Reset (window end, epoch seconds), in that order.
-	if w.count >= limit {
+	if len(log) >= limit {
+		logs[client] = log
 		statusLine(429)
-		addHeaderInt("Retry-After", int64(math.Ceil(float64(start+window)-r.Now)))
+		addHeaderInt("Retry-After", int64(math.Ceil(log[0]+window-r.Now)))
 		addHeaderInt("X-RateLimit-Limit", limit)
-		addHeaderInt("X-RateLimit-Remaining", limit-w.count)
-		addHeaderInt("X-RateLimit-Reset", start+window)
+		addHeaderInt("X-RateLimit-Remaining", int64(limit-len(log)))
+		addHeaderInt("X-RateLimit-Reset", int64(math.Ceil(log[0]+window)))
 		endHead()
 		return
 	}
-	w.count++
+	log = append(log, r.Now)
+	logs[client] = log
 	statusLine(200)
 	addHeaderInt("X-RateLimit-Limit", limit)
-	addHeaderInt("X-RateLimit-Remaining", limit-w.count)
-	addHeaderInt("X-RateLimit-Reset", start+window)
+	addHeaderInt("X-RateLimit-Remaining", int64(limit-len(log)))
+	addHeaderInt("X-RateLimit-Reset", int64(math.Ceil(log[0]+window)))
 	endHead()
 }
 
