@@ -52,38 +52,54 @@ func endHead() {
 	out.WriteString("Content-Length: 0\r\n\r\n")
 }
 
-const limit = 5     // allowed requests in any window-second span
-const window = 60.0 // seconds
+const capacity = 10.0  // most tokens a bucket can hold
+const rate = 0.5       // tokens added per second
+const exportCost = 5.0 // tokens a request to /export spends; every other request spends 1
 
-var logs = map[string][]float64{} // client -> timestamps of its allowed requests, oldest first
+type bucket struct {
+	tokens float64
+	last   float64 // time the tokens were last computed
+}
+
+var buckets = map[string]*bucket{}
 
 func handle(r *Request) {
 	client := header(r, "x-api-key")
 	if client == "" {
 		client = "anonymous"
 	}
-	log := logs[client]
-
-	for len(log) > 0 && log[0] <= r.Now-window {
-		log = log[1:]
+	path := r.Target
+	if i := strings.IndexByte(path, '?'); i >= 0 {
+		path = path[:i]
+	}
+	cost := 1.0
+	if path == "/export" {
+		cost = exportCost
+	}
+	// TODO 1: a client's first request finds a FULL bucket (tokens: capacity, last: r.Now) in buckets.
+	//         Otherwise refill: tokens = min(capacity, tokens + (now - last) * rate), last = now (refused requests too).
+	b := buckets[client]
+	if b == nil {
+		b = &bucket{tokens: capacity, last: r.Now}
+		buckets[client] = b
+	} else {
+		b.tokens = math.Min(capacity, b.tokens+(r.Now-b.last)*rate)
+		b.last = r.Now
 	}
 
-	if len(log) >= limit {
-		logs[client] = log
+	// TODO 2: tokens >= cost -> subtract cost, 200. Otherwise 429 with Retry-After = (cost - tokens) / rate, rounded up.
+	if b.tokens >= cost {
+		b.tokens = b.tokens - cost
+		statusLine(200)
+	} else {
 		statusLine(429)
-		addHeaderInt("Retry-After", int64(math.Ceil(log[0]+window-r.Now)))
-		addHeaderInt("X-RateLimit-Limit", limit)
-		addHeaderInt("X-RateLimit-Remaining", int64(limit-len(log)))
-		addHeaderInt("X-RateLimit-Reset", int64(math.Ceil(log[0]+window)))
-		endHead()
-		return
+		addHeaderInt("Retry-After", int64(math.Ceil((cost-b.tokens)/rate)))
 	}
-	log = append(log, r.Now)
-	logs[client] = log
-	statusLine(200)
-	addHeaderInt("X-RateLimit-Limit", limit)
-	addHeaderInt("X-RateLimit-Remaining", int64(limit-len(log)))
-	addHeaderInt("X-RateLimit-Reset", int64(math.Ceil(log[0]+window)))
+
+	// TODO 3: X-RateLimit-Limit, -Remaining (tokens rounded down), -Reset (now + (capacity - tokens) / rate, rounded up).
+	addHeaderInt("X-RateLimit-Limit", capacity)
+	addHeaderInt("X-RateLimit-Remaining", int64(math.Floor(b.tokens)))
+	addHeaderInt("X-RateLimit-Reset", int64(math.Ceil(r.Now+(capacity-b.tokens)/rate)))
 	endHead()
 }
 
