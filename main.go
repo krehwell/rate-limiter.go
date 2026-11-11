@@ -52,45 +52,97 @@ func endHead() {
 	out.WriteString("Content-Length: 0\r\n\r\n")
 }
 
-const window = 60
+const edgeLimit = 40   // requests per IP per window
+const window = 60      // seconds
+const exportCost = 5.0 // tokens for /export; everything else costs 1
 
-var tierNames = [3]string{"ip", "user", "global"} // checked in this order
-var budgets = [3]int{5, 3, 12}                     // budget per window, per tier
+type bucket struct { // one token bucket per user
+	plan   string
+	tokens float64
+	last   float64
+}
 
-var counts = map[string]int{} // "tier|identity|window start" -> requests that tier has counted
+var edgeCounts = map[string]int{}  // "ip|window start" -> requests counted at the edge
+var buckets = map[string]*bucket{} // user -> bucket
 
 func handle(r *Request) {
 	user := header(r, "x-api-key")
 	if user == "" {
 		user = "anonymous"
 	}
-	// TODO 1: the client address is the LAST comma-separated entry of x-forwarded-for, trimmed; "unknown" if there is no header.
+	path := r.Target
+	if i := strings.IndexByte(path, '?'); i >= 0 {
+		path = path[:i]
+	}
+	// TODO 1: GET /healthz -> 200, nothing else: no counters, no buckets.
+	if r.Method == "GET" && path == "/healthz" {
+		statusLine(200)
+		endHead()
+		return
+	}
+
+	// TODO 2: edge: the ip is the LAST entry of x-forwarded-for, trimmed ("unknown" if absent). At edgeLimit in this
+	//         window -> 429, Retry-After (seconds to the window end, rounded up), X-RateLimit-Resource: ip. Else count it.
 	ip := "unknown"
 	if xff := header(r, "x-forwarded-for"); xff != "" {
 		parts := strings.Split(xff, ",")
 		ip = strings.TrimSpace(parts[len(parts)-1])
 	}
-
-	// TODO 2: for each tier, in order, with the counter for (tier, that tier's identity, window start) in counts:
-	//         at its budget -> 429 with Retry-After (seconds to the window end, rounded up) and
-	//         X-RateLimit-Resource naming the tier; stop, and do not touch the later tiers.
-	//         Otherwise count the request in that tier and move on to the next one.
 	start := int64(math.Floor(r.Now/window)) * window
-	identities := [3]string{ip, user, "all"}
-	for i, tier := range tierNames {
-		key := tier + "|" + identities[i] + "|" + strconv.FormatInt(start, 10)
-		if counts[key] >= budgets[i] {
-			statusLine(429)
-			addHeaderInt("Retry-After", int64(math.Ceil(float64(start+window)-r.Now)))
-			addHeader("X-RateLimit-Resource", tier)
-			endHead()
-			return
-		}
-		counts[key]++
+	edgeKey := ip + "|" + strconv.FormatInt(start, 10)
+	if edgeCounts[edgeKey] >= edgeLimit {
+		statusLine(429)
+		addHeaderInt("Retry-After", int64(math.Ceil(float64(start+window)-r.Now)))
+		addHeader("X-RateLimit-Resource", "ip")
+		endHead()
+		return
+	}
+	edgeCounts[edgeKey]++
+
+	// TODO 3: plan = x-plan if it is "pro" or "enterprise", else "free". free: capacity 5, rate 0.25. pro: capacity 10,
+	//         rate 0.5. enterprise -> 200, no bucket (forget the user's old one).
+	plan := header(r, "x-plan")
+	capacity, rate := 5.0, 0.25
+	switch plan {
+	case "pro":
+		capacity, rate = 10.0, 0.5
+	case "enterprise":
+		delete(buckets, user)
+		statusLine(200)
+		endHead()
+		return
+	default:
+		plan = "free"
 	}
 
-	// TODO 3: every tier passed -> 200.
-	statusLine(200)
+	// TODO 4: the user's bucket (buckets[user]): new, full and stamped r.Now if missing or made for another plan;
+	//         otherwise refill it. tokens >= cost -> subtract, 200. Else 429 + Retry-After (deficit / rate, rounded up)
+	//         + X-RateLimit-Resource: user.
+	cost := 1.0
+	if path == "/export" {
+		cost = exportCost
+	}
+	b := buckets[user]
+	if b == nil || b.plan != plan {
+		b = &bucket{plan: plan, tokens: capacity, last: r.Now}
+		buckets[user] = b
+	} else {
+		b.tokens = math.Min(capacity, b.tokens+(r.Now-b.last)*rate)
+		b.last = r.Now
+	}
+	if b.tokens >= cost {
+		b.tokens -= cost
+		statusLine(200)
+	} else {
+		statusLine(429)
+		addHeaderInt("Retry-After", int64(math.Ceil((cost-b.tokens)/rate)))
+		addHeader("X-RateLimit-Resource", "user")
+	}
+
+	// TODO 5: for free and pro: X-RateLimit-Limit, -Remaining (rounded down), -Reset (now + (capacity - tokens) / rate, rounded up).
+	addHeaderInt("X-RateLimit-Limit", int64(capacity))
+	addHeaderInt("X-RateLimit-Remaining", int64(math.Floor(b.tokens)))
+	addHeaderInt("X-RateLimit-Reset", int64(math.Ceil(r.Now+(capacity-b.tokens)/rate)))
 	endHead()
 }
 
