@@ -52,112 +52,49 @@ func endHead() {
 	out.WriteString("Content-Length: 0\r\n\r\n")
 }
 
-type slot struct {
-	value     int64
-	hasExpiry bool
-	expires   float64 // epoch second at which the key disappears
-}
+const window = 60
 
-// Store is a stand-in for Redis: integer counters with an optional expiry, on the simulated clock.
-// Every call runs to completion before the next one starts, so Incr never loses an update.
-type Store struct {
-	slots map[string]*slot
-}
+var tierNames = [3]string{"ip", "user", "global"} // checked in this order
+var budgets = [3]int{5, 3, 12}                     // budget per window, per tier
 
-var store = &Store{slots: map[string]*slot{}}
-var redisUp = true // false between "@redis down" and "@redis up"
-
-// purge removes an expired key on access, like Redis does.
-func (s *Store) purge(key string, now float64) {
-	if sl, ok := s.slots[key]; ok && sl.hasExpiry && now >= sl.expires {
-		delete(s.slots, key)
-	}
-}
-
-// Incr is INCR key: add 1 (a missing key counts as 0) and return the new value.
-func (s *Store) Incr(key string, now float64) int64 {
-	s.purge(key, now)
-	sl := s.slots[key]
-	if sl == nil {
-		sl = &slot{}
-		s.slots[key] = sl
-	}
-	sl.value++
-	return sl.value
-}
-
-// ExpireAt is EXPIREAT key at: the key disappears at epoch second at. Nothing happens to a missing key.
-func (s *Store) ExpireAt(key string, at, now float64) {
-	s.purge(key, now)
-	if sl := s.slots[key]; sl != nil {
-		sl.hasExpiry = true
-		sl.expires = at
-	}
-}
-
-// Expire is EXPIRE key seconds: the key disappears seconds from now.
-func (s *Store) Expire(key string, seconds, now float64) {
-	s.ExpireAt(key, now+seconds, now)
-}
-
-// Count is DBSIZE: how many keys are alive.
-func (s *Store) Count(now float64) int {
-	for key := range s.slots {
-		s.purge(key, now)
-	}
-	return len(s.slots)
-}
-
-
-const limit = 10 // requests per client per window, across ALL servers
-const window = 60 // seconds
+var counts = map[string]int{} // "tier|identity|window start" -> requests that tier has counted
 
 func handle(r *Request) {
-	client := header(r, "x-api-key")
-	if client == "" {
-		client = "anonymous"
+	user := header(r, "x-api-key")
+	if user == "" {
+		user = "anonymous"
 	}
-	// TODO 1: store down (redisUp is false) -> 200 with no rate-limit headers, and do not touch the store.
-	if !redisUp {
-		statusLine(200)
-		endHead()
-		return
-	}
-
-	// TODO 2: key "rl:<client>:<window index>", window index = floor(now / window). count := store.Incr(key, r.Now).
-	idx := int64(math.Floor(r.Now / window))
-	end := (idx + 1) * window
-	key := "rl:" + client + ":" + strconv.FormatInt(idx, 10)
-	count := store.Incr(key, r.Now)
-
-	// TODO 3: count == 1 -> the key is new: store.ExpireAt(key, window end, r.Now).
-	if count == 1 {
-		store.ExpireAt(key, float64(end), r.Now)
+	// TODO 1: the client address is the LAST comma-separated entry of x-forwarded-for, trimmed; "unknown" if there is no header.
+	ip := "unknown"
+	if xff := header(r, "x-forwarded-for"); xff != "" {
+		parts := strings.Split(xff, ",")
+		ip = strings.TrimSpace(parts[len(parts)-1])
 	}
 
-	// TODO 4: count > limit -> 429 with Retry-After; else 200. Then Limit, Remaining (never below 0), Reset (window end).
-	if count > limit {
-		statusLine(429)
-		addHeaderInt("Retry-After", int64(math.Ceil(float64(end)-r.Now)))
-	} else {
-		statusLine(200)
+	// TODO 2: for each tier, in order, with the counter for (tier, that tier's identity, window start) in counts:
+	//         at its budget -> 429 with Retry-After (seconds to the window end, rounded up) and
+	//         X-RateLimit-Resource naming the tier; stop, and do not touch the later tiers.
+	//         Otherwise count the request in that tier and move on to the next one.
+	start := int64(math.Floor(r.Now/window)) * window
+	identities := [3]string{ip, user, "all"}
+	for i, tier := range tierNames {
+		key := tier + "|" + identities[i] + "|" + strconv.FormatInt(start, 10)
+		if counts[key] >= budgets[i] {
+			statusLine(429)
+			addHeaderInt("Retry-After", int64(math.Ceil(float64(start+window)-r.Now)))
+			addHeader("X-RateLimit-Resource", tier)
+			endHead()
+			return
+		}
+		counts[key]++
 	}
-	addHeaderInt("X-RateLimit-Limit", limit)
-	addHeaderInt("X-RateLimit-Remaining", max(0, limit-count))
-	addHeaderInt("X-RateLimit-Reset", end)
+
+	// TODO 3: every tier passed -> 200.
+	statusLine(200)
 	endHead()
 }
 
-func directive(line string, now float64) {
-	switch line {
-	case "@redis down":
-		redisUp = false
-	case "@redis up":
-		redisUp = true
-	case "@keys":
-		out.WriteString("keys=" + strconv.Itoa(store.Count(now)) + "\n")
-	}
-}
+func directive(line string, now float64) {}
 
 func main() {
 	raw, _ := ioutil.ReadAll(os.Stdin)
